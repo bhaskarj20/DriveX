@@ -55,7 +55,7 @@ function AIAssistant() {
         ...prev,
         {
           sender: "ai",
-          text: "Sorry, I couldn't connect to the AI right now."
+          text: `AI Error: ${error.message}`
         }
       ]);
 
