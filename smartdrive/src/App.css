@@ -491,3 +491,214 @@
 .ai-message.ai {
   align-self: flex-start;
 }
+
+.home-page {
+  min-height: 100vh;
+}
+
+.hero-section {
+  min-height: 75vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+}
+
+.hero-content {
+  max-width: 800px;
+  text-align: center;
+}
+
+.hero-label {
+  font-size: 14px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  margin-bottom: 15px;
+}
+
+.hero-content h1 {
+  font-size: 56px;
+  line-height: 1.1;
+  margin: 0 0 25px;
+}
+
+.hero-description {
+  font-size: 18px;
+  line-height: 1.6;
+  max-width: 650px;
+  margin: 0 auto 30px;
+}
+
+.hero-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.hero-buttons button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.secondary-button {
+  background: transparent;
+  border: 1px solid #ccc !important;
+}
+
+.how-it-works {
+  padding: 80px 20px;
+  text-align: center;
+}
+
+.section-heading {
+  max-width: 700px;
+  margin: 0 auto 45px;
+}
+
+.section-heading p {
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+
+.section-heading h2 {
+  font-size: 36px;
+  margin-top: 10px;
+}
+
+.steps-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 25px;
+  max-width: 1000px;
+  margin: auto;
+}
+
+.step-card {
+  padding: 30px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+}
+
+.step-icon {
+  font-size: 35px;
+  margin-bottom: 15px;
+}
+
+.step-card h3 {
+  font-size: 22px;
+  margin-bottom: 10px;
+}
+
+.step-card p {
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .steps-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+.features-section {
+  padding: 80px 20px;
+  text-align: center;
+}
+
+.features-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 25px;
+  max-width: 900px;
+  margin: auto;
+}
+
+.feature-card {
+  padding: 30px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+.feature-icon {
+  font-size: 32px;
+  margin-bottom: 15px;
+}
+
+.feature-card h3 {
+  font-size: 21px;
+  margin-bottom: 10px;
+}
+
+.feature-card p {
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .features-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+.get-started-section {
+  padding: 90px 20px;
+  text-align: center;
+}
+
+.get-started-content {
+  max-width: 700px;
+  margin: auto;
+}
+
+.get-started-content h2 {
+  font-size: 36px;
+  margin: 15px 0;
+}
+
+.get-started-content p {
+  line-height: 1.6;
+}
+
+.get-started-content button {
+  margin-top: 20px;
+  padding: 12px 25px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.home-page {
+  display: block !important;
+  width: 100%;
+}
+
+.home-page > section {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.hero-section {
+  min-height: 75vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+}
+
+.hero-content {
+  max-width: 800px;
+  margin: auto;
+  text-align: center;
+}
+
+.how-it-works,
+.features-section,
+.get-started-section {
+  width: 100%;
+  padding: 90px 20px;
+  box-sizing: border-box;
+}
