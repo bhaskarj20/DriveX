@@ -6,7 +6,7 @@ import EmergencyModal from "../components/EmergencyModal";
 import Navbar from "../components/Navbar";
 import EmergencyHistory from "../components/EmergencyHistory";
 import AIAssistant from "../components/AIAssistant";
-import vehicleData from "../data/vehicleData";
+
 
 function Dashboard() {
   const [emergency, setEmergency] = useState(false);
