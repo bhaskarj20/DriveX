@@ -5,6 +5,7 @@ import EmergencyButton from "../components/EmergencyButton";
 import EmergencyModal from "../components/EmergencyModal";
 import Navbar from "../components/Navbar";
 import EmergencyHistory from "../components/EmergencyHistory";
+import AIAssistant from "../components/AIAssistant";
 
 function Dashboard() {
   const [emergency, setEmergency] = useState(false);
@@ -96,6 +97,7 @@ function Dashboard() {
       )}
 
       <EmergencyHistory history={history} />
+      <AIAssistant />
 
     </div>
   );

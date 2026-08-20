@@ -412,3 +412,82 @@
     align-items: flex-start;
   }
 }
+
+.ai-assistant {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  margin-top: 30px;
+}
+
+.ai-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ai-header h2 {
+  margin: 0;
+}
+
+.ai-header span {
+  padding: 5px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.ai-message {
+  margin-top: 20px;
+  padding: 15px;
+  border-radius: 10px;
+}
+
+.ai-message p {
+  margin: 5px 0;
+}
+
+.ai-input {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.ai-input input {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 15px;
+}
+
+.ai-input button {
+  padding: 0 18px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.ai-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.ai-message {
+  padding: 10px 14px;
+  border-radius: 10px;
+  max-width: 80%;
+}
+
+.ai-message.user {
+  align-self: flex-end;
+}
+
+.ai-message.ai {
+  align-self: flex-start;
+}
