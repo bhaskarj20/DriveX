@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-function AIAssistant() {
+function AIAssistant({ vehicleStatus, heartRate, location }) {
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState([
     {
@@ -33,8 +33,13 @@ function AIAssistant() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          message: userQuestion
-        })
+  message: userQuestion,
+  context: {
+    vehicleStatus,
+    heartRate,
+    location
+  }
+})
       });
 
       const data = await response.json();

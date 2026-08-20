@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { message } = req.body;
+    const { message, context } = req.body;
 
     if (!message) {
       return res.status(400).json({
@@ -25,16 +25,31 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           model: "google/gemma-4-26b-a4b-it:free",
           messages: [
-            {
-              role: "system",
-              content:
-                "You are the SmartDrive AI Assistant. Help users understand the SmartDrive vehicle safety dashboard, emergency system, vehicle status, and general safety information. Keep responses concise and clear. You are an assistant only and must not make emergency decisions."
-            },
-            {
-              role: "user",
-              content: message
-            }
-          ]
+  {
+    role: "system",
+    content: `
+You are the SmartDrive AI Assistant.
+
+You help users understand their SmartDrive dashboard.
+
+Current SmartDrive data:
+- Vehicle status: ${context?.vehicleStatus || "Unknown"}
+- Heart rate: ${context?.heartRate || "Unknown"} BPM
+- Location: ${context?.location || "Unknown"}
+
+Use this information when answering questions about the current vehicle state.
+
+Do not invent sensor data or claim access to information that is not provided.
+
+You are an assistant only. You must not make emergency decisions or replace emergency services.
+Keep responses concise and easy to understand.
+`
+  },
+  {
+    role: "user",
+    content: message
+  }
+]
         })
       }
     );
