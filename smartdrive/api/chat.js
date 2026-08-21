@@ -8,7 +8,7 @@ export default async function handler(req, res) {
   try {
     const { message, context } = req.body;
 
-    if (!message) {
+    if (!message || !message.trim()) {
       return res.status(400).json({
         error: "Message is required",
       });
@@ -22,15 +22,16 @@ export default async function handler(req, res) {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          "HTTP-Referer": "https://smartdrive.vercel.app",
+          "X-Title": "SmartDrive",
         },
 
         body: JSON.stringify({
-          model: "google/gemma-4-26b-a4b-it:free",
+          model: "openrouter/free",
 
           messages: [
             {
               role: "system",
-
               content: `
 You are the SmartDrive AI Assistant.
 
@@ -50,57 +51,77 @@ IMPORTANT:
 - Do not modify dashboard values.
 - Do not claim access to information that is not provided.
 - You are an assistant only.
-- You must not make emergency decisions or replace emergency services.
+- Do not make emergency decisions or replace emergency services.
 
 Keep responses concise and easy to understand.
 `,
             },
-
             {
               role: "user",
-              content: message,
+              content: message.trim(),
             },
           ],
         }),
       }
     );
 
-    // Read the response as text first
+    // Read response as text first
     const responseText = await response.text();
 
     console.log("OpenRouter status:", response.status);
     console.log("OpenRouter response:", responseText);
 
-    // Make sure we actually received something
+    // Empty response
     if (!responseText) {
       return res.status(502).json({
         error: "OpenRouter returned an empty response.",
       });
     }
 
+    // Parse JSON safely
     let data;
 
     try {
       data = JSON.parse(responseText);
-    } catch (parseError) {
-      console.error("Invalid JSON from OpenRouter:", responseText);
+    } catch (error) {
+      console.error(
+        "OpenRouter returned invalid JSON:",
+        responseText
+      );
 
       return res.status(502).json({
         error: "OpenRouter returned an invalid response.",
       });
     }
 
+    // OpenRouter error
     if (!response.ok) {
+      console.error(
+        "OpenRouter API error:",
+        data?.error
+      );
+
       return res.status(response.status).json({
         error:
           data?.error?.message ||
-          "OpenRouter request failed.",
+          `OpenRouter request failed with status ${response.status}.`,
       });
     }
 
+    // Extract answer
     const answer =
-      data?.choices?.[0]?.message?.content ||
-      "Sorry, I couldn't generate a response.";
+      data?.choices?.[0]?.message?.content;
+
+    if (!answer) {
+      console.error(
+        "Unexpected OpenRouter response:",
+        data
+      );
+
+      return res.status(502).json({
+        error: "AI returned no answer.",
+      });
+    }
 
     return res.status(200).json({
       answer,
@@ -110,7 +131,8 @@ Keep responses concise and easy to understand.
     console.error("AI API error:", error);
 
     return res.status(500).json({
-      error: "Something went wrong while contacting the AI.",
+      error:
+        "Something went wrong while contacting the AI.",
     });
   }
 }

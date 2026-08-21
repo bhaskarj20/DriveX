@@ -1531,3 +1531,59 @@ body.dark-mode .map-label {
   background: rgba(19, 25, 43, 0.85);
   color: #d1d5db;
 }
+
+/* =====================================
+   LOGIN FORM
+   ===================================== */
+
+.password-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.password-wrapper input {
+  box-sizing: border-box;
+  padding-right: 50px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 17px;
+}
+
+.login-error {
+  color: #dc2626 !important;
+  font-size: 14px;
+  margin: 0 0 15px !important;
+}
+
+.demo-login {
+  margin-top: 20px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #f3f4f6;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.demo-login span {
+  color: #6b7280;
+}
+
+/* Dark mode */
+
+body.dark-mode .demo-login {
+  background: #111827;
+}
+
+body.dark-mode .demo-login span {
+  color: #aab4c5;
+}
