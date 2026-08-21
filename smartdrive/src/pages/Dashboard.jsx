@@ -19,6 +19,7 @@ import {
 } from "../simulator/vehicleSimulator";
 
 import { detectEmergency } from "../detection/emergencyDetector";
+import RiskScore from "../components/RiskScore";
 
 function Dashboard() {
   const [emergency, setEmergency] = useState(false);
@@ -242,6 +243,8 @@ function Dashboard() {
             </div>
 
           </div>
+
+          <RiskScore history={history} />
 
         </div>
 

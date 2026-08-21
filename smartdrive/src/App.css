@@ -1587,3 +1587,70 @@ body.dark-mode .demo-login {
 body.dark-mode .demo-login span {
   color: #aab4c5;
 }
+
+/* =====================================
+   DRIVER RISK SCORE
+   ===================================== */
+
+.risk-card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.risk-icon {
+  font-size: 32px;
+}
+
+.risk-info h3 {
+  margin: 0 0 6px;
+}
+
+.risk-score {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.risk-score span {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.risk-info p {
+  margin: 4px 0;
+  font-weight: 600;
+}
+
+.risk-info small {
+  color: #6b7280;
+}
+
+/* =====================================
+   RISK SCORE - DARK MODE
+   ===================================== */
+
+.dark-mode .risk-card {
+  background: #1e263b;
+  color: #f4f6fb;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
+.dark-mode .risk-score {
+  color: #f4f6fb;
+}
+
+.dark-mode .risk-score span {
+  color: #9ca3af;
+}
+
+.dark-mode .risk-info p {
+  color: #86efac;
+}
+
+.dark-mode .risk-info small {
+  color: #9ca3af;
+}
