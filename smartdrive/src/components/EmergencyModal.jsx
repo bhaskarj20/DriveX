@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-function EmergencyModal({ onCancel }) {
+function EmergencyModal({ onCancel, reason }) {
   const [countdown, setCountdown] = useState(10);
 
   useEffect(() => {
@@ -16,6 +16,7 @@ function EmergencyModal({ onCancel }) {
   return (
     <div className="modal-overlay">
       <div className="emergency-modal">
+
         {countdown > 0 ? (
           <>
             <div className="emergency-icon">🚨</div>
@@ -25,6 +26,16 @@ function EmergencyModal({ onCancel }) {
             <p>
               A possible accident has been detected.
             </p>
+
+            {/* Detection Reason */}
+            <div className="detection-reason">
+              <strong>Detection Reason</strong>
+
+              <p>
+                {reason ||
+                  "Emergency condition detected."}
+              </p>
+            </div>
 
             <div className="countdown">
               {countdown}
@@ -47,7 +58,19 @@ function EmergencyModal({ onCancel }) {
 
             <h2>Emergency Activated</h2>
 
-            <p>Emergency response has been initiated.</p>
+            <p>
+              Emergency response has been initiated.
+            </p>
+
+            {/* Detection Reason */}
+            <div className="detection-reason">
+              <strong>Detection Reason</strong>
+
+              <p>
+                {reason ||
+                  "Emergency condition detected."}
+              </p>
+            </div>
 
             <div className="alert-status">
               <p>✓ Emergency contact notified</p>
@@ -56,6 +79,7 @@ function EmergencyModal({ onCancel }) {
             </div>
           </>
         )}
+
       </div>
     </div>
   );
