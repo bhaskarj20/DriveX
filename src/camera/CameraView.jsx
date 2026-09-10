@@ -11,7 +11,6 @@ import {
 } from "../driverState/driverVision";
 
 import { createEyeStateTracker } from "../driverState/eyeStateTracker";
-
 import { createHeadOrientationTracker } from "../driverState/headOrientationTracker";
 
 import {
@@ -23,21 +22,15 @@ import { calculateDriverState } from "../driverState/driverStateEngine";
 
 function CameraView({ active, onDriverStateChange }) {
   const videoRef = useRef(null);
-
   const faceLandmarkerRef = useRef(null);
-
   const animationFrameRef = useRef(null);
 
   const eyeTrackerRef = useRef(null);
-
   const headTrackerRef = useRef(null);
 
   const [cameraError, setCameraError] = useState("");
-
   const [faceStatus, setFaceStatus] = useState("Waiting");
-
   const [eyeData, setEyeData] = useState(null);
-
   const [eyeClosedDuration, setEyeClosedDuration] =
     useState(0);
 
@@ -54,7 +47,8 @@ function CameraView({ active, onDriverStateChange }) {
     useState(DRIVER_STATES.ALERT);
 
   if (!eyeTrackerRef.current) {
-    eyeTrackerRef.current = createEyeStateTracker();
+    eyeTrackerRef.current =
+      createEyeStateTracker();
   }
 
   if (!headTrackerRef.current) {
@@ -106,6 +100,7 @@ function CameraView({ active, onDriverStateChange }) {
                   "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
                 delegate: "GPU",
               },
+
               runningMode: "VIDEO",
               numFaces: 1,
             }
@@ -171,7 +166,9 @@ function CameraView({ active, onDriverStateChange }) {
                   landmarks
                 );
 
-              setHeadDirection(head.direction);
+              setHeadDirection(
+                head.direction
+              );
 
               const headState =
                 headTrackerRef.current.update(
@@ -201,18 +198,29 @@ function CameraView({ active, onDriverStateChange }) {
                   headState,
                 });
 
-              console.log("DRIVER STATES:", {
-                eyeDrowsy: eyeState.isDrowsy,
-                eyeDuration: Math.round(
-                  eyeState.durationMs
-                ),
-                headDistracted:
-                  headState.isDistracted,
-                headDuration: Math.round(
-                  headState.durationMs
-                ),
-                result: nextDriverState,
-              });
+              console.log(
+                "DRIVER STATES:",
+                {
+                  eyeDrowsy:
+                    eyeState.isDrowsy,
+
+                  eyeDuration:
+                    Math.round(
+                      eyeState.durationMs
+                    ),
+
+                  headDistracted:
+                    headState.isDistracted,
+
+                  headDuration:
+                    Math.round(
+                      headState.durationMs
+                    ),
+
+                  result:
+                    nextDriverState,
+                }
+              );
 
               let confidence = 1;
 
@@ -262,17 +270,13 @@ function CameraView({ active, onDriverStateChange }) {
               );
 
               setEyeData(null);
-
               setEyeClosedDuration(0);
 
               setHeadDirection("UNKNOWN");
-
               setHeadAwayDuration(0);
-
               setIsDistracted(false);
 
               eyeTrackerRef.current.reset();
-
               headTrackerRef.current.reset();
 
               setVisionDriverState(
@@ -339,7 +343,7 @@ function CameraView({ active, onDriverStateChange }) {
       eyeTrackerRef.current?.reset();
       headTrackerRef.current?.reset();
     };
-  }, [active, onDriverStateChange]);
+  }, [active]);
 
   return (
     <div className="camera-view">
@@ -381,7 +385,10 @@ function CameraView({ active, onDriverStateChange }) {
 
           <p>
             Low Eye Openness Duration:{" "}
-            {Math.round(eyeClosedDuration)} ms
+            {Math.round(
+              eyeClosedDuration
+            )}{" "}
+            ms
           </p>
 
           <p>
@@ -390,12 +397,17 @@ function CameraView({ active, onDriverStateChange }) {
 
           <p>
             Looking Away Duration:{" "}
-            {Math.round(headAwayDuration)} ms
+            {Math.round(
+              headAwayDuration
+            )}{" "}
+            ms
           </p>
 
           <p>
             Distraction:{" "}
-            {isDistracted ? "YES" : "NO"}
+            {isDistracted
+              ? "YES"
+              : "NO"}
           </p>
 
           <p>

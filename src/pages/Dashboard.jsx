@@ -1,64 +1,64 @@
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-
-import vehicleData from "../data/vehicleData";
-import EmergencyContacts from "../components/EmergencyContacts";
-import EmergencyModal from "../components/EmergencyModal";
-import Navbar from "../components/Navbar";
-import EmergencyHistory from "../components/EmergencyHistory";
-import AIAssistant from "../components/AIAssistant";
+import CameraView from "../camera/CameraView";
+import LiveLocation from "../components/LiveLocation";
 import LiveSensorMonitor from "../components/LiveSensorMonitor";
 import SimulationControls from "../components/SimulationControls";
-import SensorGraph from "../components/SensorGraph";
-import LiveLocation from "../components/LiveLocation";
 import DriveControls from "../components/DriveControls";
-
-import {
-  startVehicleSimulator,
-  triggerSimulationEvent,
-} from "../simulator/vehicleSimulator";
-
-import { calculateRisk } from "../detection/emergencyDetector";
-
 import RiskScore from "../components/RiskScore";
-
-import { createTelemetry } from "../telemetry/telemetry";
+import SensorGraph from "../components/SensorGraph";
+import AIAssistant from "../components/AIAssistant";
+import EmergencyContacts from "../components/EmergencyContacts";
+import EmergencyHistory from "../components/EmergencyHistory";
+import EmergencyModal from "../components/EmergencyModal";
 
 import {
   DRIVE_STATES,
   createDriveSession,
-  beginPreDriveCheck,
   startDrive,
   endDrive,
-  resetDrive,
 } from "../drive/driveSession";
 
-import { generateDriverState } from "../driverState/driverStateSimulator";
+import {
+  triggerSimulationEvent,
+  startVehicleSimulator,
+} from "../simulator/vehicleSimulator";
 
-import CameraView from "../camera/CameraView";
+import { createTelemetry } from "../telemetry/telemetry";
+import { calculateRisk } from "../detection/emergencyDetector";
+
+import {
+  DRIVER_STATES,
+  createDriverStateData,
+} from "../driverState/driverState";
+
+import vehicleData from "../data/vehicleData";
 
 function Dashboard() {
-  const [emergency, setEmergency] = useState(false);
-  const [emergencyReason, setEmergencyReason] = useState("");
-  const [history, setHistory] = useState([]);
+  const [driveSession, setDriveSession] =
+    useState(createDriveSession());
 
-  const [driveSession, setDriveSession] = useState(
-    createDriveSession()
-  );
-
-  const [driverState, setDriverState] = useState({
-    state: "ALERT",
-    confidence: 0,
-    source: "SIMULATION",
-    timestamp: null,
+  const [vehicle, setVehicle] = useState({
+    speed: 0,
+    temperature: 0,
+    heartRate: 0,
+    heartRateSource: "SIMULATION",
+    heartRateTimestamp: null,
+    motion: "Stationary",
+    battery: 0,
+    emergency: false,
+    event: "Normal",
+    dataSource: "SIMULATION",
   });
 
-  const driverStateRef = useRef(driverState);
+  const [driverState, setDriverState] =
+    useState(
+      createDriverStateData({
+        state: DRIVER_STATES.ALERT,
+        confidence: 0,
+        source: "CAMERA",
+      })
+    );
 
   const [risk, setRisk] = useState({
     riskScore: 0,
@@ -68,221 +68,61 @@ function Dashboard() {
     signals: {},
   });
 
-  const [vehicle, setVehicle] = useState({
-    speed: 0,
-    temperature: 0,
-    heartRate: 0,
-    motion: "Waiting",
-    battery: 0,
-    emergency: false,
-    event: "Normal",
-    dataSource: "SIMULATION",
-    timestamp: null,
-  });
+  const [emergency, setEmergency] = useState(false);
+  const [emergencyReason, setEmergencyReason] =
+    useState("");
 
-  const lastEmergencyEvent = useRef(null);
+  const [history, setHistory] = useState([]);
 
-  const handleDriverStateChange = useCallback(
-    (nextDriverState) => {
-      driverStateRef.current = nextDriverState;
-      setDriverState(nextDriverState);
-    },
-    []
-  );
+  const [activeSection, setActiveSection] =
+    useState("overview");
+
+  const [graphResetKey, setGraphResetKey] =
+    useState(0);
+
+  const [darkMode, setDarkMode] =
+    useState(false);
+
+  const driverStateRef =
+    useRef(driverState);
+
+  const lastEmergencyEvent =
+    useRef(null);
 
   useEffect(() => {
-    if (driveSession.status !== DRIVE_STATES.ACTIVE) {
-      return undefined;
-    }
+    driverStateRef.current = driverState;
+  }, [driverState]);
 
-    const stopSimulator = startVehicleSimulator((data) => {
-      const telemetry = createTelemetry(data);
-
-      const simulatedDriverState =
-        generateDriverState();
-
-      // ==========================================
-      // CAMERA DRIVER STATE
-      // ==========================================
-
-      if (
-        driverStateRef.current.source === "CAMERA"
-      ) {
-        const riskResult = calculateRisk(
-          telemetry,
-          driverStateRef.current
-        );
-
-        setVehicle(telemetry);
-        setRisk(riskResult);
-
-        const criticalDriver =
-          driverStateRef.current.state === "CRITICAL";
-
-        const emergencyTrigger =
-          riskResult.emergency || criticalDriver;
-
-        const emergencyKey = criticalDriver
-          ? "CRITICAL_DRIVER"
-          : telemetry.event;
-
-        if (
-          emergencyTrigger &&
-          (telemetry.event !== "Normal" ||
-            criticalDriver) &&
-          lastEmergencyEvent.current !== emergencyKey
-        ) {
-          lastEmergencyEvent.current =
-            emergencyKey;
-
-          setEmergency(true);
-
-          setEmergencyReason(
-            criticalDriver
-              ? "Critical driver state detected: drowsiness and distraction detected simultaneously."
-              : riskResult.reasons.length > 0
-                ? riskResult.reasons.join(" ")
-                : "Emergency condition detected."
-          );
-
-          const newEvent = {
-            id: Date.now(),
-            type: criticalDriver
-              ? "Automatic Detection: Critical Driver State"
-              : `Automatic Detection: ${telemetry.event}`,
-            date: new Date().toLocaleString(),
-            location: vehicleData.location,
-            status:
-              "Emergency Automatically Detected",
-          };
-
-          setHistory((prev) => [
-            newEvent,
-            ...prev,
-          ]);
-        }
-
-        if (telemetry.event === "Normal" && !criticalDriver) {
-          lastEmergencyEvent.current = null;
-        }
-
-        return;
-      }
-
-      // ==========================================
-      // SIMULATED DRIVER STATE
-      // ==========================================
-
-      const riskResult = calculateRisk(
-        telemetry,
-        simulatedDriverState
-      );
-
-      driverStateRef.current =
-        simulatedDriverState;
-
-      setVehicle(telemetry);
-      setDriverState(simulatedDriverState);
-      setRisk(riskResult);
-
-      if (
-        riskResult.emergency &&
-        telemetry.event !== "Normal" &&
-        lastEmergencyEvent.current !==
-          telemetry.event
-      ) {
-        lastEmergencyEvent.current =
-          telemetry.event;
-
-        setEmergency(true);
-
-        setEmergencyReason(
-          riskResult.reasons.length > 0
-            ? riskResult.reasons.join(" ")
-            : "Emergency condition detected."
-        );
-
-        const newEvent = {
-          id: Date.now(),
-          type: `Automatic Detection: ${telemetry.event}`,
-          date: new Date().toLocaleString(),
-          location: vehicleData.location,
-          status:
-            "Emergency Automatically Detected",
-        };
-
-        setHistory((prev) => [
-          newEvent,
-          ...prev,
-        ]);
-      }
-
-      if (telemetry.event === "Normal") {
-        lastEmergencyEvent.current = null;
-      }
-    });
-
-    return stopSimulator;
-  }, [driveSession.status]);
-
-  const handleStartDrive = () => {
-    setDriveSession((current) =>
-      beginPreDriveCheck(current)
-    );
-  };
-
-  const handleBeginDrive = () => {
-    driverStateRef.current = {
-      state: "ALERT",
-      confidence: 0,
-      source: "CAMERA",
-      timestamp: null,
-    };
-
-    setDriverState(
-      driverStateRef.current
-    );
-
-    setDriveSession((current) =>
-      startDrive(current)
-    );
-
-    lastEmergencyEvent.current = null;
-  };
-
-  const handleEndDrive = () => {
-    setDriveSession((current) =>
-      endDrive(current)
-    );
-
-    lastEmergencyEvent.current = null;
-
-    setEmergency(false);
-    setEmergencyReason("");
-
-    driverStateRef.current = {
-      state: "ALERT",
-      confidence: 0,
-      source: "SIMULATION",
-      timestamp: null,
-    };
-
-    setDriverState(
-      driverStateRef.current
-    );
-
+  const resetVehicle = useCallback(() => {
     setVehicle({
       speed: 0,
       temperature: 0,
       heartRate: 0,
-      motion: "Drive Ended",
+      heartRateSource: "SIMULATION",
+      heartRateTimestamp: null,
+      motion: "Stationary",
       battery: 0,
       emergency: false,
       event: "Normal",
       dataSource: "SIMULATION",
-      timestamp: null,
     });
+  }, []);
 
+  const resetDriverState = useCallback(() => {
+    const resetState =
+      createDriverStateData({
+        state: DRIVER_STATES.ALERT,
+        confidence: 0,
+        source: "CAMERA",
+      });
+
+    driverStateRef.current =
+      resetState;
+
+    setDriverState(resetState);
+  }, []);
+
+  const resetRisk = useCallback(() => {
     setRisk({
       riskScore: 0,
       riskLevel: "Low",
@@ -290,12 +130,107 @@ function Dashboard() {
       reasons: [],
       signals: {},
     });
+  }, []);
+
+  const handleDriverStateChange =
+    useCallback(
+      (newDriverState) => {
+        driverStateRef.current =
+          newDriverState;
+
+        setDriverState(
+          newDriverState
+        );
+
+        const telemetry =
+          createTelemetry(vehicle);
+
+        const riskResult =
+          calculateRisk(
+            telemetry,
+            newDriverState
+          );
+
+        setRisk(riskResult);
+      },
+      [vehicle]
+    );
+
+  const handleStartDrive = () => {
+    setDriveSession((prev) =>
+      startDrive(prev)
+    );
+  };
+
+  const handleBeginDrive = () => {
+    const newVehicleData =
+      triggerSimulationEvent(
+        "Normal"
+      );
+
+    setVehicle(newVehicleData);
+
+    const telemetry =
+      createTelemetry(
+        newVehicleData
+      );
+
+    const currentDriverState =
+      driverStateRef.current;
+
+    const riskResult =
+      calculateRisk(
+        telemetry,
+        currentDriverState
+      );
+
+    setRisk(riskResult);
+
+    setDriveSession((prev) => ({
+      ...prev,
+      status: DRIVE_STATES.ACTIVE,
+    }));
+  };
+
+  const handleEndDrive = () => {
+    setDriveSession((prev) =>
+      endDrive(prev)
+    );
+
+    resetVehicle();
+    resetRisk();
+    resetDriverState();
+
+    setEmergency(false);
+    setEmergencyReason("");
+
+    lastEmergencyEvent.current =
+      null;
+
+    setGraphResetKey(
+      (prev) => prev + 1
+    );
   };
 
   const handleNewDrive = () => {
-    setDriveSession((current) =>
-      resetDrive(current)
+    resetVehicle();
+    resetRisk();
+    resetDriverState();
+
+    setEmergency(false);
+    setEmergencyReason("");
+
+    lastEmergencyEvent.current =
+      null;
+
+    setGraphResetKey(
+      (prev) => prev + 1
     );
+
+    setDriveSession({
+      ...createDriveSession(),
+      status: DRIVE_STATES.IDLE,
+    });
   };
 
   const handleSimulation = (event) => {
@@ -306,212 +241,530 @@ function Dashboard() {
       return;
     }
 
-    const data = triggerSimulationEvent(event);
+    const newVehicleData =
+      triggerSimulationEvent(
+        event
+      );
 
-    const telemetry = createTelemetry(data);
-
-    const riskResult = calculateRisk(
-      telemetry,
-      driverStateRef.current
-    );
-
-    setVehicle(telemetry);
-    setRisk(riskResult);
-
-    if (event === "Normal") {
-      lastEmergencyEvent.current = null;
+    if (!newVehicleData) {
       return;
     }
 
-    if (riskResult.emergency) {
-      lastEmergencyEvent.current = event;
+    setVehicle(newVehicleData);
 
-      setEmergency(true);
-
-      setEmergencyReason(
-        riskResult.reasons.length > 0
-          ? riskResult.reasons.join(" ")
-          : "Emergency condition detected."
+    const telemetry =
+      createTelemetry(
+        newVehicleData
       );
 
-      const newEvent = {
-        id: Date.now(),
-        type: `Manual Simulation: ${event}`,
-        date: new Date().toLocaleString(),
-        location: vehicleData.location,
-        status:
-          "Emergency Automatically Detected",
-      };
+    const currentDriverState =
+      driverStateRef.current;
 
-      setHistory((prev) => [
-        newEvent,
-        ...prev,
-      ]);
-    }
+    const riskResult =
+      calculateRisk(
+        telemetry,
+        currentDriverState
+      );
+
+    setRisk(riskResult);
   };
 
-  const isActive =
-    driveSession.status === DRIVE_STATES.ACTIVE;
+  useEffect(() => {
+    if (
+      driveSession.status !==
+      DRIVE_STATES.ACTIVE
+    ) {
+      return;
+    }
+
+    const stopSimulator =
+      startVehicleSimulator(
+        (newVehicleData) => {
+          setVehicle(
+            newVehicleData
+          );
+
+          const telemetry =
+            createTelemetry(
+              newVehicleData
+            );
+
+          const currentDriverState =
+            driverStateRef.current;
+
+          const riskResult =
+            calculateRisk(
+              telemetry,
+              currentDriverState
+            );
+
+          setRisk(riskResult);
+
+          const criticalDriver =
+            currentDriverState.state ===
+            DRIVER_STATES.CRITICAL;
+
+          const emergencyTrigger =
+            riskResult.emergency ||
+            criticalDriver;
+
+          const emergencyKey =
+            criticalDriver
+              ? "CRITICAL_DRIVER"
+              : newVehicleData.event;
+
+          if (
+            emergencyTrigger &&
+            (
+              newVehicleData.event !==
+                "Normal" ||
+              criticalDriver
+            ) &&
+            lastEmergencyEvent.current !==
+              emergencyKey
+          ) {
+            lastEmergencyEvent.current =
+              emergencyKey;
+
+            setEmergency(true);
+
+            setEmergencyReason(
+              criticalDriver
+                ? "Critical driver state detected: drowsiness and distraction detected simultaneously."
+                : riskResult.reasons.length >
+                    0
+                  ? riskResult.reasons.join(
+                      " "
+                    )
+                  : "Emergency condition detected."
+            );
+
+            const newEvent = {
+              id: Date.now(),
+
+              type: criticalDriver
+                ? "Automatic Detection: Critical Driver State"
+                : `Automatic Detection: ${newVehicleData.event}`,
+
+              date:
+                new Date().toLocaleString(),
+
+              location:
+                vehicleData.location,
+
+              status:
+                "Emergency Automatically Detected",
+            };
+
+            setHistory((prev) => [
+              newEvent,
+              ...prev,
+            ]);
+          }
+
+          if (
+            newVehicleData.event ===
+              "Normal" &&
+            !criticalDriver
+          ) {
+            lastEmergencyEvent.current =
+              null;
+          }
+        }
+      );
+
+    return stopSimulator;
+  }, [driveSession.status]);
+
+  const handleCloseEmergency = () => {
+    setEmergency(false);
+  };
+
+  const isDriveActive =
+    driveSession.status ===
+    DRIVE_STATES.ACTIVE;
 
   return (
-    <div className="dashboard-page">
-      <Navbar />
+    <div
+      className={`dashboard-app ${
+        darkMode
+          ? "dark-mode"
+          : "light-mode"
+      }`}
+    >
 
-      <div className="dashboard-container">
+      <aside className="dashboard-sidebar">
+
+        <div className="sidebar-brand">
+          <h1>DriveX</h1>
+          <span>
+            Driver Safety System
+          </span>
+        </div>
+
+        <nav className="sidebar-nav">
+
+          <button
+            className={
+              activeSection ===
+              "overview"
+                ? "active"
+                : ""
+            }
+            onClick={() =>
+              setActiveSection(
+                "overview"
+              )
+            }
+          >
+            🏠 Overview
+          </button>
+
+          <button
+            className={
+              activeSection ===
+              "driver-monitoring"
+                ? "active"
+                : ""
+            }
+            onClick={() =>
+              setActiveSection(
+                "driver-monitoring"
+              )
+            }
+          >
+            📷 Driver Monitoring
+          </button>
+
+          <button
+            className={
+              activeSection ===
+              "emergency-center"
+                ? "active"
+                : ""
+            }
+            onClick={() =>
+              setActiveSection(
+                "emergency-center"
+              )
+            }
+          >
+            🚨 Emergency Center
+          </button>
+
+          <button
+            className={
+              activeSection ===
+              "ai-copilot"
+                ? "active"
+                : ""
+            }
+            onClick={() =>
+              setActiveSection(
+                "ai-copilot"
+              )
+            }
+          >
+            🤖 AI Copilot
+          </button>
+
+          <button
+            className={
+              activeSection ===
+              "analytics"
+                ? "active"
+                : ""
+            }
+            onClick={() =>
+              setActiveSection(
+                "analytics"
+              )
+            }
+          >
+            📊 Driver Analytics
+          </button>
+
+        </nav>
+
+        <div className="sidebar-theme">
+
+          <button
+            className="theme-toggle"
+            onClick={() =>
+              setDarkMode(
+                (prev) => !prev
+              )
+            }
+          >
+            {darkMode
+              ? "☀️ Bright Mode"
+              : "🌙 Dark Mode"}
+          </button>
+
+        </div>
+
+      </aside>
+
+      <main className="dashboard-main">
 
         <div className="dashboard-header">
+
           <div>
-            <h1>DriveX Dashboard</h1>
+            <h1>
+              Driver Safety Dashboard
+            </h1>
 
             <p>
-              Driver Safety & Emergency Assistance
+              Real-time vehicle and
+              driver monitoring
             </p>
           </div>
 
-          <div className="system-status">
+          <div className="driver-status-active">
             <span className="status-dot"></span>
 
-            {isActive
-              ? "Drive Active"
-              : "System Ready"}
-          </div>
-        </div>
-
-        <DriveControls
-          status={driveSession.status}
-          onStartDrive={handleStartDrive}
-          onBeginDrive={handleBeginDrive}
-          onEndDrive={handleEndDrive}
-          onNewDrive={handleNewDrive}
-        />
-
-        <div className="status-grid">
-
-          <div className="status-card">
-            <div className="status-icon">
-              🚗
-            </div>
-
             <div>
-              <h3>Vehicle Status</h3>
-
-              <p>
-                {vehicleData.vehicleStatus}
-              </p>
-            </div>
-          </div>
-
-          <div className="status-card">
-            <div className="status-icon">
-              ❤️
-            </div>
-
-            <div>
-              <h3>Heart Rate</h3>
-
-              <p>
-                {vehicle.heartRate} BPM
-              </p>
-            </div>
-          </div>
-
-          <div className="status-card">
-            <div className="status-icon">
-              ⚡
-            </div>
-
-            <div>
-              <h3>Speed</h3>
-
-              <p>
-                {vehicle.speed} km/h
-              </p>
-            </div>
-          </div>
-
-          <div className="status-card">
-            <div className="status-icon">
-              📍
-            </div>
-
-            <div>
-              <h3>Location</h3>
-
-              <p>
-                {vehicleData.location}
-              </p>
-            </div>
-          </div>
-
-          <div className="status-card">
-            <div className="status-icon">
-              📷
-            </div>
-
-            <div>
-              <h3>Driver State</h3>
-
-              <p>
-                {driverState.state}
-              </p>
-
               <small>
-                Source: {driverState.source}
-
-                {driverState.confidence > 0 &&
-                  ` • ${Math.round(
-                    driverState.confidence * 100
-                  )}% confidence`}
+                Driver Status
               </small>
+
+              <strong>
+                {isDriveActive
+                  ? "Active"
+                  : "Inactive"}
+              </strong>
             </div>
           </div>
 
-          <RiskScore risk={risk} />
+        </div>
+
+        <div className="dashboard-summary">
+
+          <div>
+            <span>
+              System Status
+            </span>
+
+            <strong>
+              {isDriveActive
+                ? "Monitoring Active"
+                : "System Ready"}
+            </strong>
+          </div>
+
+          <div>
+            <span>
+              Driver State
+            </span>
+
+            <strong>
+              {driverState.state}
+            </strong>
+          </div>
+
+          <div>
+            <span>
+              Current Risk
+            </span>
+
+            <strong>
+              {risk.riskLevel}
+            </strong>
+          </div>
+
+          <div>
+            <span>
+              Emergency
+            </span>
+
+            <strong>
+              {emergency
+                ? "Detected"
+                : "Normal"}
+            </strong>
+          </div>
 
         </div>
 
-        <LiveLocation />
+        {activeSection ===
+          "overview" && (
 
-        <LiveSensorMonitor
-          vehicle={vehicle}
-        />
+          <section className="dashboard-section">
 
-        <CameraView
-          active={isActive}
-          onDriverStateChange={
-            handleDriverStateChange
-          }
-        />
+            <DriveControls
+              status={
+                driveSession.status
+              }
+              onStartDrive={
+                handleStartDrive
+              }
+              onBeginDrive={
+                handleBeginDrive
+              }
+              onEndDrive={
+                handleEndDrive
+              }
+              onNewDrive={
+                handleNewDrive
+              }
+            />
 
-        <SensorGraph
-          vehicle={vehicle}
-        />
+            <SimulationControls
+              onSimulate={
+                handleSimulation
+              }
+              disabled={
+                driveSession.status !==
+                DRIVE_STATES.ACTIVE
+              }
+            />
 
-        <SimulationControls
-          onSimulate={handleSimulation}
-        />
+            <LiveSensorMonitor
+              vehicle={vehicle}
+            />
 
-        <EmergencyContacts />
+          </section>
+        )}
 
-        <EmergencyHistory
-          history={history}
-        />
+        {activeSection ===
+  "driver-monitoring" && (
+  <section className="dashboard-section">
+    <div className="monitoring-grid">
+      <CameraView
+        active={
+          driveSession.status ===
+          DRIVE_STATES.ACTIVE
+        }
+        onDriverStateChange={
+          handleDriverStateChange
+        }
+      />
 
-        <AIAssistant
-          vehicleStatus={
-            vehicleData.vehicleStatus
-          }
-          heartRate={vehicle.heartRate}
-          location={vehicleData.location}
-        />
+      <LiveLocation />
+    </div>
+  </section>
+)}
 
-      </div>
+        {activeSection ===
+          "emergency-center" && (
+
+          <section className="dashboard-section">
+
+            <div className="emergency-section">
+
+              <h2>
+                🚨 Emergency Center
+              </h2>
+
+              <p>
+                Current emergency status:{" "}
+                <strong>
+                  {emergency
+                    ? "Emergency Detected"
+                    : "Normal"}
+                </strong>
+              </p>
+
+              <p>
+                Current Risk:{" "}
+                <strong>
+                  {risk.riskLevel}
+                </strong>
+              </p>
+
+            </div>
+
+            <EmergencyContacts />
+
+            <EmergencyHistory
+              history={history}
+            />
+
+          </section>
+        )}
+
+        {activeSection ===
+          "ai-copilot" && (
+
+          <section className="dashboard-section">
+
+            <AIAssistant
+              vehicleData={vehicle}
+              driverState={
+                driverState
+              }
+              risk={risk}
+            />
+
+          </section>
+        )}
+
+        {activeSection ===
+          "analytics" && (
+
+          <section className="dashboard-section">
+
+            <div className="analytics-summary">
+
+              <div className="stat-card">
+                <span>
+                  Driver State
+                </span>
+
+                <strong>
+                  {driverState.state}
+                </strong>
+              </div>
+
+              <div className="stat-card">
+                <span>
+                  Risk Score
+                </span>
+
+                <strong>
+                  {risk.riskScore}/10
+                </strong>
+              </div>
+
+              <div className="stat-card">
+                <span>
+                  Speed
+                </span>
+
+                <strong>
+                  {vehicle.speed} km/h
+                </strong>
+              </div>
+
+              <div className="stat-card">
+                <span>
+                  Heart Rate
+                </span>
+
+                <strong>
+                  {vehicle.heartRate} BPM
+                </strong>
+              </div>
+
+            </div>
+
+            <SensorGraph
+              key={graphResetKey}
+              vehicle={vehicle}
+            />
+
+          </section>
+        )}
+
+      </main>
 
       {emergency && (
         <EmergencyModal
-          reason={emergencyReason}
-          onCancel={() =>
-            setEmergency(false)
+          reason={
+            emergencyReason
+          }
+          onCancel={
+            handleCloseEmergency
           }
         />
       )}

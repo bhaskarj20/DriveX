@@ -1,11 +1,9 @@
-function SimulationControls({ onSimulate }) {
+function SimulationControls({ onSimulate, disabled = false }) {
   return (
     <div className="simulation-controls">
-
       <div className="simulation-header">
         <div>
           <h2>🎛️ Simulation Controls</h2>
-
           <p>
             Manually simulate vehicle and driver events
           </p>
@@ -17,10 +15,10 @@ function SimulationControls({ onSimulate }) {
       </div>
 
       <div className="simulation-buttons">
-
         <button
           className="simulation-button normal"
           onClick={() => onSimulate("Normal")}
+          disabled={disabled}
         >
           🟢 Normal Driving
         </button>
@@ -28,6 +26,7 @@ function SimulationControls({ onSimulate }) {
         <button
           className="simulation-button"
           onClick={() => onSimulate("Sudden Acceleration")}
+          disabled={disabled}
         >
           ⚡ Sudden Acceleration
         </button>
@@ -35,6 +34,7 @@ function SimulationControls({ onSimulate }) {
         <button
           className="simulation-button"
           onClick={() => onSimulate("Sudden Braking")}
+          disabled={disabled}
         >
           🛑 Sudden Braking
         </button>
@@ -42,6 +42,7 @@ function SimulationControls({ onSimulate }) {
         <button
           className="simulation-button"
           onClick={() => onSimulate("Driver Stress")}
+          disabled={disabled}
         >
           ❤️ Driver Stress
         </button>
@@ -49,6 +50,7 @@ function SimulationControls({ onSimulate }) {
         <button
           className="simulation-button"
           onClick={() => onSimulate("Abnormal Motion")}
+          disabled={disabled}
         >
           📐 Abnormal Motion
         </button>
@@ -56,12 +58,11 @@ function SimulationControls({ onSimulate }) {
         <button
           className="simulation-button danger"
           onClick={() => onSimulate("Accident")}
+          disabled={disabled}
         >
           🚨 Simulate Accident
         </button>
-
       </div>
-
     </div>
   );
 }
