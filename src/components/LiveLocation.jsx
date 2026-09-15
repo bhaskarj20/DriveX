@@ -1,143 +1,328 @@
 import { useEffect, useState } from "react";
 
-function LiveLocation() {
-  const [position, setPosition] = useState({
-    x: 50,
-    y: 50,
-  });
+import "leaflet/dist/leaflet.css";
+
+import {
+  MapContainer,
+  TileLayer,
+  CircleMarker,
+  Popup,
+  LayersControl,
+  useMap,
+} from "react-leaflet";
+
+function MapUpdater({ location, visible }) {
+  const map = useMap();
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setPosition((prev) => ({
-        x: Math.min(
-          90,
-          Math.max(10, prev.x + (Math.random() * 6 - 3))
-        ),
+    if (!visible) {
+      return;
+    }
 
-        y: Math.min(
-          90,
-          Math.max(10, prev.y + (Math.random() * 6 - 3))
-        ),
-      }));
-    }, 2000);
+    // Give the browser time to apply the visible layout
+    const timer = setTimeout(() => {
+      map.invalidateSize();
 
-    return () => clearInterval(interval);
-  }, []);
+      if (
+        location.latitude !== null &&
+        location.longitude !== null
+      ) {
+        map.setView(
+          [location.latitude, location.longitude],
+          16
+        );
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [location, visible, map]);
+
+  return null;
+}
+
+function LiveLocation({
+  active,
+  visible = true,
+  onLocationChange,
+}) {
+  const [location, setLocation] = useState({
+    latitude: null,
+    longitude: null,
+    accuracy: null,
+  });
+
+  const [gpsStatus, setGpsStatus] =
+    useState("GPS Inactive");
+
+  const [lastUpdated, setLastUpdated] =
+    useState(null);
+
+  const [error, setError] = useState("");
+
+  // GPS tracking
+  useEffect(() => {
+    // Drive ended / GPS inactive
+    if (!active) {
+      setGpsStatus("GPS Inactive");
+      setError("");
+
+      // Clear previous GPS location
+      const emptyLocation = {
+        latitude: null,
+        longitude: null,
+        accuracy: null,
+      };
+
+      setLocation(emptyLocation);
+      setLastUpdated(null);
+
+      // Tell Dashboard that there is no active location
+      if (onLocationChange) {
+        onLocationChange(emptyLocation);
+      }
+
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      setGpsStatus("GPS Unavailable");
+      setError(
+        "Geolocation is not supported by this browser."
+      );
+      return;
+    }
+
+    setGpsStatus("Requesting GPS...");
+    setError("");
+
+    const watchId =
+      navigator.geolocation.watchPosition(
+        (currentPosition) => {
+          const {
+            latitude,
+            longitude,
+            accuracy,
+          } = currentPosition.coords;
+
+          const newLocation = {
+            latitude,
+            longitude,
+            accuracy,
+          };
+
+          setLocation(newLocation);
+
+          // Send latest GPS location to Dashboard
+          if (onLocationChange) {
+            onLocationChange(newLocation);
+          }
+
+          setGpsStatus("GPS Active");
+
+          setLastUpdated(
+            new Date().toLocaleTimeString()
+          );
+
+          setError("");
+        },
+
+        (geoError) => {
+          setGpsStatus("GPS Error");
+
+          if (geoError.code === 1) {
+            setError(
+              "Location permission was denied."
+            );
+          } else if (geoError.code === 2) {
+            setError(
+              "Current location is unavailable."
+            );
+          } else if (geoError.code === 3) {
+            setError(
+              "Location request timed out."
+            );
+          } else {
+            setError(
+              "Unable to get current location."
+            );
+          }
+        },
+
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 5000,
+        }
+      );
+
+    return () => {
+      navigator.geolocation.clearWatch(watchId);
+    };
+  }, [active, onLocationChange]);
+
+  const hasLocation =
+    location.latitude !== null &&
+    location.longitude !== null;
 
   return (
     <div className="live-location">
-
       {/* Header */}
-
       <div className="location-header">
-
         <div>
           <h2>📍 Live Vehicle Location</h2>
 
           <p>
-            Simulated GPS tracking
+            {active
+              ? "Real-time GPS tracking"
+              : "GPS tracking inactive"}
           </p>
         </div>
 
         <div className="gps-status">
-          <span className="gps-dot"></span>
-          GPS Active
-        </div>
+          <span
+            className={`gps-dot ${
+              active ? "gps-active" : ""
+            }`}
+          ></span>
 
+          {gpsStatus}
+        </div>
       </div>
 
-      {/* Map */}
-
-      <div className="simulated-map">
-
-        {/* Roads */}
-
-        <div className="road road-horizontal road-one"></div>
-
-        <div className="road road-horizontal road-two"></div>
-
-        <div className="road road-vertical road-three"></div>
-
-        <div className="road road-vertical road-four"></div>
-
-        <div className="road road-diagonal"></div>
-
-        {/* Map labels */}
-
-        <span className="map-label label-one">
-          Park Street
-        </span>
-
-        <span className="map-label label-two">
-          Main Road
-        </span>
-
-        <span className="map-label label-three">
-          City Center
-        </span>
-
-        {/* Vehicle */}
-
-        <div
-          className="vehicle-marker"
+      {/* Real Map */}
+      <div
+        style={{
+          height: "400px",
+          width: "100%",
+          borderRadius: "16px",
+          overflow: "hidden",
+        }}
+      >
+        <MapContainer
+          center={[22.5726, 88.3639]}
+          zoom={13}
+          scrollWheelZoom={true}
           style={{
-            left: `${position.x}%`,
-            top: `${position.y}%`,
+            height: "100%",
+            width: "100%",
           }}
         >
-          🚗
-        </div>
+          <LayersControl position="topright">
+            {/* Default */}
+            <LayersControl.BaseLayer
+              checked
+              name="🗺️ Default"
+            >
+              <TileLayer
+                attribution="&copy; OpenStreetMap contributors"
+                url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+                maxZoom={19}
+              />
+            </LayersControl.BaseLayer>
 
+            {/* Satellite */}
+            <LayersControl.BaseLayer
+              name="🛰️ Satellite"
+            >
+              <TileLayer
+                attribution="Tiles &copy; Esri"
+                url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                maxZoom={19}
+              />
+            </LayersControl.BaseLayer>
+          </LayersControl>
+
+          <MapUpdater
+            location={location}
+            visible={visible}
+          />
+
+          {hasLocation && (
+            <CircleMarker
+              center={[
+                location.latitude,
+                location.longitude,
+              ]}
+              radius={10}
+            >
+              <Popup>
+                <strong>
+                  DriveX Vehicle
+                </strong>
+
+                <br />
+
+                Current GPS location
+
+                <br />
+
+                Accuracy: ±
+                {Math.round(location.accuracy)}
+                m
+              </Popup>
+            </CircleMarker>
+          )}
+        </MapContainer>
       </div>
 
-      {/* Location information */}
-
+      {/* Location Information */}
       <div className="location-info">
-
         <div className="location-item">
-
           <span>📍</span>
 
           <div>
             <strong>Current Location</strong>
 
-            <p>
-              Kolkata, West Bengal
-            </p>
+            {hasLocation ? (
+              <p>
+                {location.latitude.toFixed(6)},{" "}
+                {location.longitude.toFixed(6)}
+              </p>
+            ) : (
+              <p>
+                {active
+                  ? "Waiting for GPS..."
+                  : "Drive not active"}
+              </p>
+            )}
           </div>
-
         </div>
 
         <div className="location-item">
-
           <span>📡</span>
 
           <div>
             <strong>GPS Signal</strong>
 
             <p>
-              Strong
+              {hasLocation
+                ? `Accuracy ±${Math.round(
+                    location.accuracy
+                  )} m`
+                : gpsStatus}
             </p>
           </div>
-
         </div>
 
         <div className="location-item">
-
           <span>🔄</span>
 
           <div>
             <strong>Last Updated</strong>
 
             <p>
-              Just now
+              {lastUpdated || "Not available"}
             </p>
           </div>
-
         </div>
-
       </div>
 
+      {/* GPS Error */}
+      {error && (
+        <div className="location-error">
+          {error}
+        </div>
+      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useState } from "react";
 
-function Login({ onLogin, onRegister, onBack }) {
+function Register({ onRegister, onLogin, onBack }) {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -11,20 +12,21 @@ function Login({ onLogin, onRegister, onBack }) {
 
     setError("");
 
-    if (!email || !password) {
-      setError("Please enter your email and password.");
+    if (!name || !email || !password) {
+      setError("Please fill in all fields.");
       return;
     }
 
     try {
       const response = await fetch(
-        "http://127.0.0.1:5000/api/auth/login",
+        "http://127.0.0.1:5000/api/auth/register",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
+            name,
             email,
             password,
           }),
@@ -34,20 +36,15 @@ function Login({ onLogin, onRegister, onBack }) {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.message || "Invalid email or password.");
+        setError(data.message || "Registration failed.");
         return;
       }
 
-      console.log("Logged in user:", data.user);
+      console.log("Registered user:", data.user);
 
-localStorage.setItem(
-  "drivexUser",
-  JSON.stringify(data.user)
-);
-
-onLogin();
+      onRegister();
     } catch (error) {
-      console.error("Login request failed:", error);
+      console.error("Registration request failed:", error);
       setError("Unable to connect to the server.");
     }
   };
@@ -80,9 +77,9 @@ onLogin();
             </h2>
 
             <p>
-              Monitor your vehicle, understand driver
-              behaviour, detect risks, and respond when
-              safety matters most.
+              Create your DriveX account and access
+              intelligent vehicle and driver safety
+              monitoring.
             </p>
 
             <div className="login-safety-list">
@@ -131,7 +128,7 @@ onLogin();
           </div>
         </div>
 
-        {/* ================= LOGIN PANEL ================= */}
+        {/* ================= REGISTER PANEL ================= */}
 
         <div className="login-form-panel">
           <div className="login-card">
@@ -147,21 +144,34 @@ onLogin();
 
             <div className="login-card-header">
               <span className="login-card-icon">
-                🔐
+                👤
               </span>
 
               <div>
-                <p>WELCOME BACK</p>
-                <h2>Sign in to DriveX</h2>
+                <p>GET STARTED</p>
+                <h2>Create your DriveX account</h2>
               </div>
             </div>
 
             <p className="login-description">
-              Access your vehicle and driver safety
-              dashboard.
+              Create an account to access your vehicle
+              and driver safety dashboard.
             </p>
 
             <form onSubmit={handleSubmit}>
+
+              <div className="login-field">
+                <label>Full Name</label>
+
+                <input
+                  type="text"
+                  placeholder="Enter your name"
+                  value={name}
+                  onChange={(e) =>
+                    setName(e.target.value)
+                  }
+                />
+              </div>
 
               <div className="login-field">
                 <label>Email Address</label>
@@ -186,7 +196,7 @@ onLogin();
                         ? "text"
                         : "password"
                     }
-                    placeholder="Enter your password"
+                    placeholder="Create a password"
                     value={password}
                     onChange={(e) =>
                       setPassword(e.target.value)
@@ -222,21 +232,21 @@ onLogin();
                 type="submit"
                 className="login-submit-button"
               >
-                Sign In
+                Create Account
                 <span>→</span>
               </button>
 
             </form>
 
-            <div className="login-register-prompt">
-              <span>Don't have an account?</span>
+            <div className="register-login-prompt">
+              <span>Already have an account?</span>
 
               <button
                 type="button"
-                onClick={onRegister}
-                className="login-register-button"
+                onClick={onLogin}
+                className="register-login-button"
               >
-                Create one
+                Sign in
               </button>
             </div>
 
@@ -252,4 +262,4 @@ onLogin();
   );
 }
 
-export default Login;
+export default Register;

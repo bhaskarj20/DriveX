@@ -15,6 +15,17 @@ export function createHeartRateData({
   };
 }
 
+export function createExternalHeartRate({
+  heartRate = 0,
+  timestamp = new Date().toISOString(),
+} = {}) {
+  return createHeartRateData({
+    heartRate,
+    source: HEART_RATE_SOURCES.EXTERNAL,
+    timestamp,
+  });
+}
+
 export function isValidHeartRateData(data) {
   if (!data) {
     return false;

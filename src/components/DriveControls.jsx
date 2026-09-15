@@ -30,31 +30,62 @@ function DriveControls({
     );
   }
 
-  if (isPreDriveCheck) {
-    return (
-      <div className="emergency-section">
-        <h2>Pre-Drive Check</h2>
-        <p>
-          DriveX is preparing the safety monitoring system.
+
+if (isPreDriveCheck) {
+  return (
+    <div className="emergency-section pre-drive-check">
+      <h2>🔍 Pre-Drive Check</h2>
+
+      <p className="pre-drive-description">
+        DriveX is preparing the safety monitoring system.
+      </p>
+
+      <div className="pre-drive-checks">
+        <p className="pre-drive-item">
+          <span>❤️</span>
+          <strong>Heart Rate Source</strong>
+          <em>SIMULATION</em>
+          <b>✓</b>
         </p>
 
-        <div>
-          <p>✅ Heart Rate Source: SIMULATION</p>
-          <p>✅ Vehicle Telemetry: Ready</p>
-          <p>✅ Risk Engine: Ready</p>
-          <p>📷 Driver Camera: Future Module</p>
-          <p>📍 Live GPS: Ready</p>
-        </div>
+        <p className="pre-drive-item">
+          <span>🚗</span>
+          <strong>Vehicle Telemetry</strong>
+          <em>Ready</em>
+          <b>✓</b>
+        </p>
 
-        <button
-          className="primary-button"
-          onClick={onBeginDrive}
-        >
-          ▶️ Begin Drive
-        </button>
+        <p className="pre-drive-item">
+          <span>🛡️</span>
+          <strong>Risk Engine</strong>
+          <em>Ready</em>
+          <b>✓</b>
+        </p>
+
+        <p className="pre-drive-item">
+          <span>📷</span>
+          <strong>Driver Camera</strong>
+          <em>Ready</em>
+          <b>✓</b>
+        </p>
+
+        <p className="pre-drive-item">
+          <span>📍</span>
+          <strong>Live GPS</strong>
+          <em>Ready</em>
+          <b>✓</b>
+        </p>
       </div>
-    );
-  }
+
+      <button
+        className="primary-button pre-drive-button"
+        onClick={onBeginDrive}
+      >
+        ▶️ Begin Drive
+      </button>
+    </div>
+  );
+}
 
   if (isActive) {
     return (

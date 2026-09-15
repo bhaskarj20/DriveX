@@ -1,4 +1,7 @@
-export function calculateRisk(telemetry, driverState = null) {
+export function calculateRisk(
+  telemetry,
+  driverState = null
+) {
   const {
     speed = 0,
     heartRate = 0,
@@ -15,22 +18,30 @@ export function calculateRisk(telemetry, driverState = null) {
 
   if (event === "Sudden Braking") {
     riskScore += 2;
-    reasons.push("Sudden braking detected.");
+    reasons.push(
+      "Sudden braking detected."
+    );
   }
 
   if (event === "Sudden Acceleration") {
     riskScore += 1;
-    reasons.push("Sudden acceleration detected.");
+    reasons.push(
+      "Sudden acceleration detected."
+    );
   }
 
   if (event === "Driver Stress") {
     riskScore += 1;
-    reasons.push("Driver stress signal detected.");
+    reasons.push(
+      "Driver stress signal detected."
+    );
   }
 
   if (motion === "Abnormal") {
     riskScore += 2;
-    reasons.push("Abnormal vehicle motion detected.");
+    reasons.push(
+      "Abnormal vehicle motion detected."
+    );
   }
 
   // -------------------------
@@ -39,10 +50,14 @@ export function calculateRisk(telemetry, driverState = null) {
 
   if (heartRate >= 100) {
     riskScore += 2;
-    reasons.push("Elevated heart-rate signal detected.");
+    reasons.push(
+      "Elevated heart-rate signal detected."
+    );
   } else if (heartRate >= 90) {
     riskScore += 1;
-    reasons.push("Increased heart-rate signal detected.");
+    reasons.push(
+      "Increased heart-rate signal detected."
+    );
   }
 
   // -------------------------
@@ -51,33 +66,51 @@ export function calculateRisk(telemetry, driverState = null) {
 
   if (speed >= 90) {
     riskScore += 1;
-    reasons.push("High vehicle speed detected.");
+    reasons.push(
+      "High vehicle speed detected."
+    );
   }
 
   // -------------------------
   // DRIVER STATE
   // -------------------------
 
-  if (driverState?.state === "DISTRACTED") {
+  if (
+    driverState?.state ===
+    "DISTRACTED"
+  ) {
     riskScore += 1;
-    reasons.push("Driver distraction detected.");
+    reasons.push(
+      "Driver distraction detected."
+    );
   }
 
-  if (driverState?.state === "DROWSY") {
+  if (
+    driverState?.state ===
+    "DROWSY"
+  ) {
     riskScore += 2;
-    reasons.push("Driver drowsiness detected.");
+    reasons.push(
+      "Driver drowsiness detected."
+    );
   }
 
-  if (driverState?.state === "CRITICAL") {
+  if (
+    driverState?.state ===
+    "CRITICAL"
+  ) {
     riskScore += 3;
-    reasons.push("Critical driver state detected.");
+    reasons.push(
+      "Critical driver state detected."
+    );
   }
 
   // -------------------------
   // FINAL RISK
   // -------------------------
 
-  const normalizedScore = Math.min(riskScore, 10);
+  const normalizedScore =
+    Math.min(riskScore, 10);
 
   let riskLevel = "Low";
 
@@ -87,7 +120,8 @@ export function calculateRisk(telemetry, driverState = null) {
     riskLevel = "Moderate";
   }
 
-  const emergency = normalizedScore >= 4;
+  const emergency =
+    normalizedScore >= 4;
 
   return {
     riskScore: normalizedScore,
@@ -99,18 +133,77 @@ export function calculateRisk(telemetry, driverState = null) {
       heartRate,
       motion,
       event,
-      driverState: driverState?.state ?? "Unknown",
+      driverState:
+        driverState?.state ??
+        "Unknown",
     },
   };
 }
 
+// -------------------------
+// SAVE RISK EVENT
+// -------------------------
+
+export async function sendRiskEvent(
+  riskResult,
+  driverProfileId
+) {
+  if (!driverProfileId) {
+    console.warn(
+      "Risk event not sent: driver profile ID is not available yet."
+    );
+    return;
+  }
+
+  const response = await fetch(
+    `${import.meta.env.VITE_API_URL}/api/risk-events`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type":
+          "application/json",
+      },
+      body: JSON.stringify({
+        driverProfile:
+          driverProfileId,
+        riskScore:
+          riskResult.riskScore,
+        riskLevel:
+          riskResult.riskLevel,
+        emergency:
+          riskResult.emergency,
+        reasons:
+          riskResult.reasons,
+        signals:
+          riskResult.signals,
+        timestamp:
+          new Date().toISOString(),
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Risk event request failed: ${response.status}`
+    );
+  }
+
+  return response.json();
+}
+
 // Temporary compatibility wrapper.
-export function detectEmergency(telemetry) {
-  const result = calculateRisk(telemetry);
+
+export function detectEmergency(
+  telemetry
+) {
+  const result =
+    calculateRisk(telemetry);
 
   return {
-    emergency: result.emergency,
-    riskScore: result.riskScore,
+    emergency:
+      result.emergency,
+    riskScore:
+      result.riskScore,
     reason:
       result.reasons.length > 0
         ? result.reasons.join(" ")

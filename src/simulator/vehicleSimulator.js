@@ -16,19 +16,90 @@ let vehicleState = {
 let activeEvent = null;
 let eventTicksRemaining = 0;
 
+// ---------------------------------
+// HEART-RATE SOURCE CONFIGURATION
+// ---------------------------------
+
+let heartRateSource =
+  HEART_RATE_SOURCES.SIMULATION;
+
+let externalHeartRate = 0;
+let externalHeartRateTimestamp = null;
+
+/*
+  Change the active heart-rate source.
+
+  SIMULATION is the default.
+
+  EXTERNAL can later be selected when
+  real hardware is connected.
+*/
+export function setHeartRateSource(source) {
+  if (
+    source !== HEART_RATE_SOURCES.SIMULATION &&
+    source !== HEART_RATE_SOURCES.EXTERNAL
+  ) {
+    return false;
+  }
+
+  heartRateSource = source;
+
+  return true;
+}
+
+/*
+  Receive heart-rate data from an
+  external device.
+
+  Hardware integration can call this
+  function later.
+*/
+export function setExternalHeartRate(
+  heartRate,
+  timestamp = new Date().toISOString()
+) {
+  if (typeof heartRate !== "number") {
+    return false;
+  }
+
+  externalHeartRate = heartRate;
+  externalHeartRateTimestamp = timestamp;
+
+  return true;
+}
+
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
 /*
-  Heart-rate source:
-  Currently using SIMULATION.
-  EXTERNAL DEVICE can be connected later
-  without changing the Risk Engine.
+  Creates the heart-rate data used by
+  the vehicle telemetry.
+
+  Simulation uses the existing simulated
+  heart rate.
+
+  External uses the latest value supplied
+  by an external device.
 */
 function getHeartRateData() {
+  if (
+    heartRateSource ===
+    HEART_RATE_SOURCES.EXTERNAL
+  ) {
+    return createHeartRateData({
+      heartRate: externalHeartRate,
+      source: HEART_RATE_SOURCES.EXTERNAL,
+      timestamp:
+        externalHeartRateTimestamp ??
+        new Date().toISOString(),
+    });
+  }
+
   return createHeartRateData({
-    heartRate: Math.round(vehicleState.heartRate),
+    heartRate: Math.round(
+      vehicleState.heartRate
+    ),
     source: HEART_RATE_SOURCES.SIMULATION,
   });
 }
@@ -42,7 +113,11 @@ function startRandomEvent() {
   ];
 
   activeEvent =
-    events[Math.floor(Math.random() * events.length)];
+    events[
+      Math.floor(
+        Math.random() * events.length
+      )
+    ];
 
   eventTicksRemaining =
     Math.floor(Math.random() * 2) + 2;
@@ -77,7 +152,10 @@ export function triggerSimulationEvent(event) {
 
 export function generateVehicleData() {
   // Randomly start an event
-  if (!activeEvent && Math.random() < 0.08) {
+  if (
+    !activeEvent &&
+    Math.random() < 0.08
+  ) {
     startRandomEvent();
   }
 
@@ -85,7 +163,10 @@ export function generateVehicleData() {
   // EVENT BEHAVIOUR
   // -------------------------
 
-  if (activeEvent === "Sudden Acceleration") {
+  if (
+    activeEvent ===
+    "Sudden Acceleration"
+  ) {
     vehicleState.speed = clamp(
       vehicleState.speed +
         Math.floor(Math.random() * 8) +
@@ -100,10 +181,14 @@ export function generateVehicleData() {
       140
     );
 
-    vehicleState.motion = "Rapid Acceleration";
+    vehicleState.motion =
+      "Rapid Acceleration";
   }
 
-  else if (activeEvent === "Sudden Braking") {
+  else if (
+    activeEvent ===
+    "Sudden Braking"
+  ) {
     vehicleState.speed = clamp(
       vehicleState.speed -
         Math.floor(Math.random() * 10) -
@@ -118,10 +203,14 @@ export function generateVehicleData() {
       140
     );
 
-    vehicleState.motion = "Sudden Braking";
+    vehicleState.motion =
+      "Sudden Braking";
   }
 
-  else if (activeEvent === "Driver Stress") {
+  else if (
+    activeEvent ===
+    "Driver Stress"
+  ) {
     vehicleState.heartRate = clamp(
       vehicleState.heartRate +
         Math.floor(Math.random() * 5) +
@@ -133,7 +222,10 @@ export function generateVehicleData() {
     vehicleState.motion = "Normal";
   }
 
-  else if (activeEvent === "Abnormal Motion") {
+  else if (
+    activeEvent ===
+    "Abnormal Motion"
+  ) {
     vehicleState.speed = clamp(
       vehicleState.speed +
         Math.floor(Math.random() * 21) -
@@ -155,8 +247,9 @@ export function generateVehicleData() {
   // ACCIDENT SIMULATION
   // -------------------------
 
-  else if (activeEvent === "Accident") {
-    // Simulate a severe combined event
+  else if (
+    activeEvent === "Accident"
+  ) {
     vehicleState.speed = clamp(
       vehicleState.speed - 25,
       0,
@@ -186,15 +279,19 @@ export function generateVehicleData() {
       100
     );
 
-    // Natural heart-rate movement
+    // Natural simulated heart-rate movement
     const targetHeartRate =
       72 + vehicleState.speed * 0.18;
 
-    if (vehicleState.heartRate < targetHeartRate) {
+    if (
+      vehicleState.heartRate <
+      targetHeartRate
+    ) {
       vehicleState.heartRate += 1;
     }
     else if (
-      vehicleState.heartRate > targetHeartRate
+      vehicleState.heartRate >
+      targetHeartRate
     ) {
       vehicleState.heartRate -= 1;
     }
@@ -202,7 +299,9 @@ export function generateVehicleData() {
     // Tiny natural variation
     if (Math.random() < 0.4) {
       vehicleState.heartRate +=
-        Math.random() < 0.5 ? -1 : 1;
+        Math.random() < 0.5
+          ? -1
+          : 1;
     }
 
     vehicleState.heartRate = clamp(
@@ -213,16 +312,19 @@ export function generateVehicleData() {
 
     // Motion state
     if (vehicleState.speed < 5) {
-      vehicleState.motion = "Stationary";
+      vehicleState.motion =
+        "Stationary";
     }
     else if (vehicleState.speed < 40) {
       vehicleState.motion = "Normal";
     }
     else if (vehicleState.speed < 75) {
-      vehicleState.motion = "Cruising";
+      vehicleState.motion =
+        "Cruising";
     }
     else {
-      vehicleState.motion = "High Speed";
+      vehicleState.motion =
+        "High Speed";
     }
   }
 
@@ -230,14 +332,15 @@ export function generateVehicleData() {
   // TEMPERATURE
   // -------------------------
 
-  vehicleState.temperature = Number(
-    clamp(
-      vehicleState.temperature +
-        (Math.random() * 0.6 - 0.3),
-      28,
-      36
-    ).toFixed(1)
-  );
+  vehicleState.temperature =
+    Number(
+      clamp(
+        vehicleState.temperature +
+          (Math.random() * 0.6 - 0.3),
+        28,
+        36
+      ).toFixed(1)
+    );
 
   // -------------------------
   // BATTERY
@@ -261,21 +364,42 @@ export function generateVehicleData() {
     }
   }
 
-  const heartRateData = getHeartRateData();
+  const heartRateData =
+    getHeartRateData();
 
   return {
-    speed: Math.round(vehicleState.speed),
-    temperature: vehicleState.temperature,
-    heartRate: heartRateData.heartRate,
-    heartRateSource: heartRateData.source,
-    heartRateTimestamp: heartRateData.timestamp,
+    speed: Math.round(
+      vehicleState.speed
+    ),
+
+    temperature:
+      vehicleState.temperature,
+
+    heartRate:
+      heartRateData.heartRate,
+
+    heartRateSource:
+      heartRateData.source,
+
+    heartRateTimestamp:
+      heartRateData.timestamp,
+
     motion: vehicleState.motion,
-    battery: Number(vehicleState.battery.toFixed(1)),
-    emergency: vehicleState.emergency,
-    event: activeEvent || "Normal",
+
+    battery:
+      Number(
+        vehicleState.battery.toFixed(1)
+      ),
+
+    emergency:
+      vehicleState.emergency,
+
+    event:
+      activeEvent || "Normal",
 
     // Identifies the overall telemetry source
-    dataSource: "SIMULATION",
+    dataSource:
+      heartRateData.source,
   };
 }
 
@@ -283,12 +407,19 @@ export function generateVehicleData() {
 // START SIMULATOR
 // -------------------------
 
-export function startVehicleSimulator(onUpdate) {
-  onUpdate(generateVehicleData());
+export function startVehicleSimulator(
+  onUpdate
+) {
+  onUpdate(
+    generateVehicleData()
+  );
 
   const interval = setInterval(() => {
-    onUpdate(generateVehicleData());
+    onUpdate(
+      generateVehicleData()
+    );
   }, 2000);
 
-  return () => clearInterval(interval);
+  return () =>
+    clearInterval(interval);
 }

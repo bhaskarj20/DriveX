@@ -4,7 +4,9 @@ function EmergencyModal({ onCancel, reason }) {
   const [countdown, setCountdown] = useState(10);
 
   useEffect(() => {
-    if (countdown === 0) return;
+    if (countdown === 0) {
+      return;
+    }
 
     const timer = setInterval(() => {
       setCountdown((prev) => prev - 1);
@@ -16,10 +18,11 @@ function EmergencyModal({ onCancel, reason }) {
   return (
     <div className="modal-overlay">
       <div className="emergency-modal">
-
         {countdown > 0 ? (
           <>
-            <div className="emergency-icon">🚨</div>
+            <div className="emergency-icon">
+              🚨
+            </div>
 
             <h2>Emergency Detected</h2>
 
@@ -54,7 +57,9 @@ function EmergencyModal({ onCancel, reason }) {
           </>
         ) : (
           <>
-            <div className="emergency-icon">🚨</div>
+            <div className="emergency-icon">
+              🚨
+            </div>
 
             <h2>Emergency Activated</h2>
 
@@ -73,13 +78,27 @@ function EmergencyModal({ onCancel, reason }) {
             </div>
 
             <div className="alert-status">
-              <p>✓ Emergency contact notified</p>
-              <p>✓ Authority notification simulated</p>
-              <p>✓ Location shared</p>
+              <p>
+                ✓ Emergency contact notified
+              </p>
+
+              <p>
+                ✓ Authority notification simulated
+              </p>
+
+              <p>
+                ✓ Location shared
+              </p>
             </div>
+
+            <button
+              className="safe-button"
+              onClick={onCancel}
+            >
+              Return to Dashboard
+            </button>
           </>
         )}
-
       </div>
     </div>
   );

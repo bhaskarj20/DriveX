@@ -1,13 +1,18 @@
 import { useState } from "react";
 
-function AIAssistant({ vehicleStatus, heartRate, location }) {
+function AIAssistant({
+  vehicleData,
+  driverState,
+  risk,
+  liveLocation,
+}) {
   const [question, setQuestion] = useState("");
 
   const [messages, setMessages] = useState([
     {
       sender: "ai",
-      text: "Hi! I'm the DriveX Assistant. How can I help you?"
-    }
+      text: "Hi! I'm the DriveX Assistant. How can I help you?",
+    },
   ]);
 
   const [loading, setLoading] = useState(false);
@@ -21,8 +26,8 @@ function AIAssistant({ vehicleStatus, heartRate, location }) {
       ...prev,
       {
         sender: "user",
-        text: userQuestion
-      }
+        text: userQuestion,
+      },
     ]);
 
     setQuestion("");
@@ -32,41 +37,45 @@ function AIAssistant({ vehicleStatus, heartRate, location }) {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           message: userQuestion,
           context: {
-            vehicleStatus,
-            heartRate,
-            location
-          }
-        })
+            vehicle: vehicleData,
+            driver: driverState,
+            risk,
+            location: liveLocation,
+          },
+        }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Request failed");
+        throw new Error(
+          data.error || "Request failed"
+        );
       }
 
       setMessages((prev) => [
         ...prev,
         {
           sender: "ai",
-          text: data.answer
-        }
+          text: data.answer,
+        },
       ]);
     } catch (error) {
+      console.error("DriveX AI error:", error);
+
       setMessages((prev) => [
         ...prev,
         {
           sender: "ai",
-          text: `AI Error: ${error.message}`
-        }
+          text:
+            "I'm unable to reach the AI service right now. Please try again in a moment.",
+        },
       ]);
-
-      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -101,7 +110,9 @@ function AIAssistant({ vehicleStatus, heartRate, location }) {
           type="text"
           placeholder="Ask something..."
           value={question}
-          onChange={(e) => setQuestion(e.target.value)}
+          onChange={(e) =>
+            setQuestion(e.target.value)
+          }
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               handleSend();
@@ -109,7 +120,10 @@ function AIAssistant({ vehicleStatus, heartRate, location }) {
           }}
         />
 
-        <button onClick={handleSend} disabled={loading}>
+        <button
+          onClick={handleSend}
+          disabled={loading}
+        >
           {loading ? "..." : "➤"}
         </button>
       </div>

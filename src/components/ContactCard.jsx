@@ -1,4 +1,12 @@
-function ContactCard({ name, relation, phone, primary, onRemove }) {
+function ContactCard({
+  name,
+  relation,
+  phone,
+  primary,
+  onRemove,
+  onSetPrimary,
+  canRemove,
+}) {
   return (
     <div className="contact-card">
       <div>
@@ -15,6 +23,15 @@ function ContactCard({ name, relation, phone, primary, onRemove }) {
         )}
 
         {!primary && (
+          <button
+            className="primary-button"
+            onClick={onSetPrimary}
+          >
+            Set as Primary
+          </button>
+        )}
+
+        {canRemove && (
           <button
             className="remove-button"
             onClick={onRemove}

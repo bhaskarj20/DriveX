@@ -42,3 +42,40 @@ export function isValidDriverStateData(data) {
 
   return true;
 }
+
+export async function sendDriverStateEvent(
+  driverState,
+  driverProfileId
+) {
+  if (!driverProfileId) {
+    console.warn(
+      "Driver state event not sent: driver profile ID is not available yet."
+    );
+    return;
+  }
+
+  const response = await fetch(
+    `${import.meta.env.VITE_API_URL}/api/driver-state-events`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        driverProfile: driverProfileId,
+        state: driverState.state,
+        confidence: driverState.confidence,
+        source: driverState.source,
+        timestamp: driverState.timestamp,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Driver state event request failed: ${response.status}`
+    );
+  }
+
+  return response.json();
+}
